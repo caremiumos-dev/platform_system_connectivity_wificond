@@ -67,6 +67,15 @@ class Server : public android::net::wifi::BnWificond {
 
   android::binder::Status tearDownInterfaces() override;
 
+  // CAF/QTI vendor extensions.
+  android::binder::Status setHostapdParam(
+      const std::vector<uint8_t>& params, bool* out_success) override;
+  android::binder::Status tearDownStaInterfaces() override;
+  android::binder::Status tearDownApInterfaces() override;
+  android::binder::Status QcCreateApInterface(
+      const std::vector<uint8_t>& iface_name,
+      android::sp<android::net::wifi::IApInterface>* created_interface) override;
+
   android::binder::Status GetClientInterfaces(
       std::vector<android::sp<android::IBinder>>* out_client_ifs) override;
   android::binder::Status GetApInterfaces(
@@ -96,6 +105,8 @@ class Server : public android::net::wifi::BnWificond {
       android::sp<android::net::wifi::IClientInterface> network_interface);
   void BroadcastApInterfaceTornDown(
       android::sp<android::net::wifi::IApInterface> network_interface);
+  // CAF/QTI vendor extension: broadcast a soft AP client (dis)association event.
+  void BroadcastSoftApClientEvent(const std::vector<uint8_t>& mac_address, bool connected);
   void MarkDownAllInterfaces();
 
   const std::unique_ptr<wifi_system::InterfaceTool> if_tool_;

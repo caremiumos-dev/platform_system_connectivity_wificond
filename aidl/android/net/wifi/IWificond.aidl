@@ -55,4 +55,22 @@ interface IWificond {
     //
     // @param callback object to remove from the set of registered callbacks.
     oneway void UnregisterCallback(IInterfaceEventCallback callback);
+
+    // CAF/QTI vendor extension: run a QSAP/hostapd parameter command in wificond.
+    //
+    // @param params raw command bytes.
+    // @return true on success.
+    boolean setHostapdParam(in byte[] params);
+
+    // CAF/QTI vendor extension: tear down all existing STA interfaces.
+    void tearDownStaInterfaces();
+
+    // CAF/QTI vendor extension: tear down all existing AP interfaces.
+    void tearDownApInterfaces();
+
+    // CAF/QTI vendor extension: create an AP interface with the given name.
+    //
+    // @param ifaceName name of the AP interface to create.
+    // @return the created IApInterface or null on failure.
+    @nullable IApInterface QcCreateApInterface(in byte[] ifaceName);
 }

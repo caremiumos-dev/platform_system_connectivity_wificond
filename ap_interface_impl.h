@@ -17,6 +17,7 @@
 #ifndef WIFICOND_AP_INTERFACE_IMPL_H_
 #define WIFICOND_AP_INTERFACE_IMPL_H_
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -50,8 +51,15 @@ class ApInterfaceImpl {
   // Get a pointer to the binder representing this ApInterfaceImpl.
   android::sp<android::net::wifi::IApInterface> GetBinder() const;
 
-  bool StartHostapd();
-  bool StopHostapd();
+  // CAF/QTI vendor extension: listener notified on soft AP client (dis)association.
+  using StationListener = std::function<void(const std::vector<uint8_t>& mac_address,
+                                             bool connected)>;
+  void SetStationListener(StationListener listener) {
+    station_listener_ = listener;
+  }
+
+  bool StartHostapd(bool is_dual_sap);
+  bool StopHostapd(bool is_dual_sap);
   bool WriteHostapdConfig(
       const std::vector<uint8_t>& ssid,
       bool is_hidden,
@@ -72,6 +80,9 @@ class ApInterfaceImpl {
 
   // Number of associated stations.
   int number_of_associated_stations_;
+
+  // CAF/QTI vendor extension: soft AP client event listener.
+  StationListener station_listener_;
 
   void OnStationEvent(StationEvent event,
                       const std::vector<uint8_t>& mac_address);

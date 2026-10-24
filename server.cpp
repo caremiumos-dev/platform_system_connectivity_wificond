@@ -108,6 +108,11 @@ Status Server::createApInterface(sp<IApInterface>* created_interface) {
       hostapd_manager_.get()));
   *created_interface = ap_interface->GetBinder();
   ap_interfaces_.push_back(std::move(ap_interface));
+  // CAF/QTI vendor extension: forward soft AP client events to registered callbacks.
+  ap_interfaces_.back()->SetStationListener(
+      [this](const std::vector<uint8_t>& mac_address, bool connected) {
+        BroadcastSoftApClientEvent(mac_address, connected);
+      });
   BroadcastApInterfaceReady(ap_interfaces_.back()->GetBinder());
 
   return Status::ok();
@@ -151,6 +156,33 @@ Status Server::tearDownInterfaces() {
   netlink_utils_->UnsubscribeRegDomainChange(wiphy_index_);
 
   return Status::ok();
+}
+
+Status Server::setHostapdParam(const vector<uint8_t>& /* params */, bool* out_success) {
+  // CAF/QTI QSAP commands are not supported by the AOSP hostapd manager.
+  *out_success = false;
+  return Status::ok();
+}
+
+Status Server::tearDownStaInterfaces() {
+  for (auto& it : client_interfaces_) {
+    BroadcastClientInterfaceTornDown(it->GetBinder());
+  }
+  client_interfaces_.clear();
+  return Status::ok();
+}
+
+Status Server::tearDownApInterfaces() {
+  for (auto& it : ap_interfaces_) {
+    BroadcastApInterfaceTornDown(it->GetBinder());
+  }
+  ap_interfaces_.clear();
+  return Status::ok();
+}
+
+Status Server::QcCreateApInterface(const vector<uint8_t>& /* iface_name */,
+                                   sp<IApInterface>* created_interface) {
+  return createApInterface(created_interface);
 }
 
 Status Server::GetClientInterfaces(vector<sp<IBinder>>* out_client_interfaces) {
@@ -331,6 +363,13 @@ void Server::BroadcastApInterfaceTornDown(
     sp<IApInterface> network_interface) {
   for (auto& it : interface_event_callbacks_) {
     it->OnApTorndownEvent(network_interface);
+  }
+}
+
+void Server::BroadcastSoftApClientEvent(const std::vector<uint8_t>& mac_address,
+                                        bool connected) {
+  for (auto& it : interface_event_callbacks_) {
+    it->OnSoftApClientEvent(mac_address, connected);
   }
 }
 

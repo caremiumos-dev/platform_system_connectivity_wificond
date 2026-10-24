@@ -31,4 +31,9 @@ interface IInterfaceEventCallback {
   // is automatically unregistered.
   oneway void OnClientTorndownEvent(IClientInterface network_interface);
   oneway void OnApTorndownEvent(IApInterface network_interface);
+
+  // CAF/QTI vendor extension: signals that a client associated/disassociated with the soft AP.
+  // @param macAddress MAC address of the client.
+  // @param connected true on association, false on disassociation.
+  oneway void OnSoftApClientEvent(in byte[] macAddress, boolean connected);
 }

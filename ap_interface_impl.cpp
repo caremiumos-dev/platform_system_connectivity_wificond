@@ -80,11 +80,12 @@ void ApInterfaceImpl::Dump(std::stringstream* ss) const {
   *ss << "------- Dump End -------" << endl;
 }
 
-bool ApInterfaceImpl::StartHostapd() {
+bool ApInterfaceImpl::StartHostapd(bool is_dual_sap) {
+  // CAF/QTI dual SAP flag is not used by the AOSP hostapd manager path.
   return hostapd_manager_->StartHostapd();
 }
 
-bool ApInterfaceImpl::StopHostapd() {
+bool ApInterfaceImpl::StopHostapd(bool is_dual_sap) {
   // Drop SIGKILL on hostapd.
   if (!hostapd_manager_->StopHostapd()) {
     // Logging was done internally.
@@ -127,11 +128,13 @@ bool ApInterfaceImpl::WriteHostapdConfig(const vector<uint8_t>& ssid,
 
 void ApInterfaceImpl::OnStationEvent(StationEvent event,
                                      const vector<uint8_t>& mac_address) {
+  bool connected;
   if (event == NEW_STATION) {
     LOG(INFO) << "New station "
               << LoggingUtils::GetMacString(mac_address)
               << " associated with hotspot";
     number_of_associated_stations_++;
+    connected = true;
   } else if (event == DEL_STATION) {
     LOG(INFO) << "Station "
               << LoggingUtils::GetMacString(mac_address)
@@ -142,6 +145,14 @@ void ApInterfaceImpl::OnStationEvent(StationEvent event,
     } else {
       number_of_associated_stations_--;
     }
+    connected = false;
+  } else {
+    return;
+  }
+
+  // CAF/QTI vendor extension: notify registered callbacks of the client event.
+  if (station_listener_) {
+    station_listener_(mac_address, connected);
   }
 }
 

@@ -32,23 +32,23 @@ ApInterfaceBinder::ApInterfaceBinder(ApInterfaceImpl* impl) : impl_{impl} {
 ApInterfaceBinder::~ApInterfaceBinder() {
 }
 
-binder::Status ApInterfaceBinder::startHostapd(bool* out_success) {
+binder::Status ApInterfaceBinder::startHostapd(bool /* is_dual_sap */, bool* out_success) {
   *out_success = false;
   if (!impl_) {
     LOG(WARNING) << "Cannot start hostapd on dead ApInterface.";
     return binder::Status::ok();
   }
-  *out_success = impl_->StartHostapd();
+  *out_success = impl_->StartHostapd(false);
   return binder::Status::ok();
 }
 
-binder::Status ApInterfaceBinder::stopHostapd(bool* out_success) {
+binder::Status ApInterfaceBinder::stopHostapd(bool /* is_dual_sap */, bool* out_success) {
   *out_success = false;
   if (!impl_) {
     LOG(WARNING) << "Cannot stop hostapd on dead ApInterface.";
     return binder::Status::ok();
   }
-  *out_success = impl_->StopHostapd();
+  *out_success = impl_->StopHostapd(false);
   return binder::Status::ok();
 }
 
