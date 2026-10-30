@@ -64,7 +64,8 @@ Server::Server(unique_ptr<InterfaceTool> if_tool,
       supplicant_manager_(std::move(supplicant_manager)),
       hostapd_manager_(std::move(hostapd_manager)),
       netlink_utils_(netlink_utils),
-      scan_utils_(scan_utils) {
+      scan_utils_(scan_utils),
+      qsap_client_(QsapClient::GetInstance()) {
 }
 
 Status Server::RegisterCallback(const sp<IInterfaceEventCallback>& callback) {
@@ -158,9 +159,13 @@ Status Server::tearDownInterfaces() {
   return Status::ok();
 }
 
-Status Server::setHostapdParam(const vector<uint8_t>& /* params */, bool* out_success) {
-  // CAF/QTI QSAP commands are not supported by the AOSP hostapd manager.
-  *out_success = false;
+Status Server::setHostapdParam(const vector<uint8_t>& params, bool* out_success) {
+  // CAF/QTI vendor extension: the Wi-Fi framework pushes raw QSAP command
+  // strings here ("softap setsoftap ...", "softap bridge up ...", ...).
+  // We keep the device behaviour but re-implement the glue in-tree; see
+  // qsap_client.h for why this interface's trust model is unfortunate.
+  std::string command(params.begin(), params.end());
+  *out_success = qsap_client_.RunCommand(command);
   return Status::ok();
 }
 

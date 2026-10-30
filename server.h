@@ -31,6 +31,7 @@
 
 #include "wificond/ap_interface_impl.h"
 #include "wificond/client_interface_impl.h"
+#include "wificond/qsap_client.h"
 
 namespace android {
 namespace wificond {
@@ -114,6 +115,7 @@ class Server : public android::net::wifi::BnWificond {
   const std::unique_ptr<wifi_system::HostapdManager> hostapd_manager_;
   NetlinkUtils* const netlink_utils_;
   ScanUtils* const scan_utils_;
+  QsapClient& qsap_client_;
 
   uint32_t wiphy_index_;
   std::vector<std::unique_ptr<ApInterfaceImpl>> ap_interfaces_;

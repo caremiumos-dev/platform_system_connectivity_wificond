@@ -59,6 +59,7 @@ LOCAL_SRC_FILES := \
     client_interface_impl.cpp \
     logging_utils.cpp \
     looper_backed_event_loop.cpp \
+    qsap_client.cpp \
     scanning/channel_settings.cpp \
     scanning/hidden_network.cpp \
     scanning/offload_scan_callback_interface_impl.cpp \
@@ -77,6 +78,7 @@ LOCAL_SRC_FILES := \
 LOCAL_SHARED_LIBRARIES := \
     android.hardware.wifi.offload@1.0 \
     libbase \
+    libdl \
     libutils \
     libhidlbase \
     libhwbinder \
