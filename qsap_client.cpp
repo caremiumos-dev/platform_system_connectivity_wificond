@@ -55,7 +55,8 @@ QsapClient::QsapClient()
       set_softap_(nullptr),
       hostd_exec_(nullptr),
       add_or_remove_interface_(nullptr),
-      control_bridge_(nullptr) {}
+      control_bridge_(nullptr),
+      hostd_exec_cmd_(nullptr) {}
 
 QsapClient::~QsapClient() {
   if (handle_ != nullptr) {
@@ -85,8 +86,11 @@ bool QsapClient::EnsureLoaded() {
       dlsym(handle_, "qsap_add_or_remove_interface"));
   control_bridge_ = reinterpret_cast<int (*)(int, char**)>(
       dlsym(handle_, "qsap_control_bridge"));
+  hostd_exec_cmd_ = reinterpret_cast<int (*)(const char*, char*, int*)>(
+      dlsym(handle_, "qsap_hostd_exec_cmd"));
   if (set_softap_ == nullptr || hostd_exec_ == nullptr ||
-      add_or_remove_interface_ == nullptr || control_bridge_ == nullptr) {
+      add_or_remove_interface_ == nullptr || control_bridge_ == nullptr ||
+      hostd_exec_cmd_ == nullptr) {
     LOG(ERROR) << kVendorLibrary << " is missing QSAP entry points";
     dlclose(handle_);
     handle_ = nullptr;
@@ -121,9 +125,23 @@ bool QsapClient::Dispatch(int argc, char** argv) {
     rc = hostd_exec_(argc, argv);
   } else if (subcommand == "bridge") {
     rc = control_bridge_(argc, argv);
+  } else if (subcommand == "qccmd") {
+    // "softap qccmd set dual2g hw_mode=g": the vendor helper parses a
+    // space-separated command line and writes its reply into the caller's
+    // buffer.  reply_len is the buffer size on input.
+    std::string line;
+    for (int i = base + 1; i < argc; ++i) {
+      if (!line.empty()) {
+        line.push_back(' ');
+      }
+      line += argv[i];
+    }
+    char reply[1024] = {};
+    int reply_len = sizeof(reply);
+    rc = hostd_exec_cmd_(line.c_str(), reply, &reply_len);
+    LOG(INFO) << "QSAP qccmd reply: " << reply;
   } else {
-    // "qccmd" and vendor-only subcommands are not reimplemented yet: the
-    // vendor hostd_exec_cmd entry point has an undocumented signature.
+    // Vendor-only subcommands.
     LOG(ERROR) << "Unsupported QSAP subcommand: " << subcommand;
     return false;
   }

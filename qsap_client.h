@@ -58,6 +58,7 @@ class QsapClient {
   int (*hostd_exec_)(int argc, char** argv);
   int (*add_or_remove_interface_)(const char* ifname, int add);
   int (*control_bridge_)(int argc, char** argv);
+  int (*hostd_exec_cmd_)(const char* cmdline, char* reply, int* reply_len);
 };
 
 }  // namespace wificond
